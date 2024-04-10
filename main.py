@@ -20,6 +20,7 @@ log = logging.getLogger(__name__)
 
 
 def main() -> None:
+    print("Starting...")
     app = ApplicationBuilder().token(settings.TG_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))

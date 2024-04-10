@@ -17,6 +17,7 @@ async def start(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ) -> None:
+    print("start")
     markup = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("Заполнить анкету", callback_data="form")],
@@ -47,7 +48,7 @@ async def callback(
             winners = db["winners"]
             if winners.find_one({"user_id": update.effective_user.id}):
                 print("found in db")
-                await update.message.reply_text(
+                await update.effective_chat.send_message(
                     "Вы уже получали мерч, его можно получить лишь единожды."
                 )
                 return
@@ -133,6 +134,7 @@ async def check_sub(
             ["Значок"],
             ["Наклейки"],
             ["Граффити баллончик"],
+            ["Шоппер"],
         ]
     )
 
@@ -168,7 +170,7 @@ async def finish(
     print(context.user_data)
 
     await update.message.reply_text(
-        "Выбор сделан!) Забери свой мерч на стенде B1!\nСпасибо за участие!",
+        "Выбор сделан!) Забери свой мерч на стенде B2!\nСпасибо за участие!",
         reply_markup=ReplyKeyboardRemove(),
     )
 

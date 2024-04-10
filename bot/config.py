@@ -6,7 +6,7 @@ load_dotenv(find_dotenv())
 
 
 class Settings:
-    TG_TOKEN: str = getenv("TG_TOKEN")
+    TG_TOKEN: str = getenv("TG_TOKEN1")
     CHANNEL_NAME: str = getenv("CHANNEL_NAME")
     MONGODB_CLIENT_URL: str = getenv("MONGODB_CLIENT_URL")
 
