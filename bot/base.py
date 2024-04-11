@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pymongo import MongoClient
 from telegram import (
     InlineKeyboardButton,
@@ -162,6 +164,7 @@ async def finish(
 ) -> int:
     context.user_data["user_id"] = update.message.from_user.id
     context.user_data["prize"] = update.message.text
+    context.user_data["datetime"] = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
     client = MongoClient(settings.MONGODB_CLIENT_URL)
     db = client["fonbet"]
