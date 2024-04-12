@@ -1,5 +1,3 @@
-import logging
-
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
