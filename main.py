@@ -10,13 +10,8 @@ from telegram.ext import (
 )
 
 from bot.config import settings
-from bot.base import cancel, start, callback, geo, source, volume, check_sub, finish
-from bot.base import GEO, SOURCE, VOLUME, CHECK_SUB, FINISH
-
-logging.basicConfig(
-    format="%(levelname)s | %(name)s | %(asctime)s | %(message)s", level=logging.INFO
-)
-log = logging.getLogger(__name__)
+from bot.base import cancel, start, callback, geo, source, volume, check_sub
+from bot.base import GEO, SOURCE, VOLUME, CHECK_SUB
 
 
 def main() -> None:
@@ -31,7 +26,7 @@ def main() -> None:
             SOURCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, source)],
             VOLUME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volume)],
             CHECK_SUB: [MessageHandler(filters.TEXT & ~filters.COMMAND, check_sub)],
-            FINISH: [MessageHandler(filters.TEXT & ~filters.COMMAND, finish)],
+            # FINISH: [MessageHandler(filters.TEXT & ~filters.COMMAND, finish)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True,

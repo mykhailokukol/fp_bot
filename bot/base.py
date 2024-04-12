@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from pymongo import MongoClient
@@ -14,12 +15,16 @@ from bot.config import settings
 
 GEO, SOURCE, VOLUME, CHECK_SUB, FINISH = range(5)
 
+logging.basicConfig(
+    format="%(levelname)s | %(name)s | %(asctime)s | %(message)s", level=logging.WARN
+)
+log = logging.getLogger(__name__)
+
 
 async def start(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ) -> None:
-    print("start")
     markup = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("Заполнить анкету", callback_data="form")],
@@ -31,7 +36,7 @@ async def start(
         ]
     )
     await update.message.reply_text(
-        "Привет!\nЧтобы получить стильный мерч от Fonbet Partners, нужно выполнить два действия:\n1. Заполнить анкету\n2. Подписаться на канал",
+        "Привет!\nFonbet Partners предлагает тебе освежиться бутылочкой прохладного пива!\n\nДля этого нужно выполнить два действия:\n1. Заполнить анкету\n2. Подписаться на канал",
         reply_markup=markup,
     )
 
@@ -131,14 +136,14 @@ async def check_sub(
         "Проверяем Вашу подписку на канал...",
         reply_markup=ReplyKeyboardRemove(),
     )
-    success_markup = ReplyKeyboardMarkup(
-        [
-            ["Значок"],
-            ["Наклейки"],
-            ["Граффити баллончик"],
-            # ["Шоппер"],
-        ]
-    )
+    # success_markup = ReplyKeyboardMarkup(
+    #     [
+    #         ["Значок"],
+    #         ["Наклейки"],
+    #         ["Граффити баллончик"],
+    #         ["Шоппер"],
+    #     ]
+    # )
 
     chat_member = await context.bot.get_chat_member(
         chat_id=settings.CHANNEL_NAME,
@@ -146,35 +151,25 @@ async def check_sub(
     )
     if chat_member.status in ["member", "administrator", "creator"]:
         await update.message.reply_text(
-            "Готово, мерч ваш!\nВыберите свой крутой мерч для получения: ",
-            reply_markup=success_markup,
+            "Готово\nЗабирай свой подарок на стенде B2!",
+            # reply_markup=success_markup,
+            reply_markup=ReplyKeyboardRemove(),
         )
-        return FINISH
+        context.user_data["user_id"] = update.message.from_user.id
+        context.user_data["prize"] = "Пиво"
+        context.user_data["datetime"] = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+        client = MongoClient(settings.MONGODB_CLIENT_URL)
+        db = client["fonbet"]
+        winners = db["winners"]
+        winners.insert_one(context.user_data)
+
+        log.warn(context.user_data)
+
+        return ConversationHandler.END
     else:
         await update.message.reply_text(
-            "Вам осталось совсем немного для получения мерча от Fonbet Partners!\nПодпишитесь на канал https://t.me/Fonbet_Partners",
+            "Вам осталось совсем немного для получения бутылочки прохладительного напитка от Fonbet Partners!\nПодпишитесь на канал https://t.me/Fonbet_Partners",
             reply_markup=yes_markup,
         )
         return CHECK_SUB
-
-
-async def finish(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> int:
-    context.user_data["user_id"] = update.message.from_user.id
-    context.user_data["prize"] = update.message.text
-    context.user_data["datetime"] = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-
-    client = MongoClient(settings.MONGODB_CLIENT_URL)
-    db = client["fonbet"]
-    winners = db["winners"]
-    winners.insert_one(context.user_data)
-    print(context.user_data)
-
-    await update.message.reply_text(
-        "Выбор сделан!) Забери свой мерч на стенде B2!\nСпасибо за участие!",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
-    return ConversationHandler.END
