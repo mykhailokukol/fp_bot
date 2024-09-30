@@ -29,7 +29,7 @@ def main() -> None:
         states={
             GEO: [MessageHandler(filters.TEXT & ~filters.COMMAND, geo)],
             SOURCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, source)],
-            VOLUME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volume)],
+            # VOLUME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volume)],
             CHECK_SUB: [MessageHandler(filters.TEXT & ~filters.COMMAND, check_sub)],
             FINISH: [MessageHandler(filters.TEXT & ~filters.COMMAND, finish)],
         },

@@ -79,16 +79,16 @@ async def geo(
 ) -> int:
     context.user_data["username"] = update.message.text
 
-    markup = ReplyKeyboardMarkup(
-        [
-            ["Россия"],
-            ["Беларусь"],
-            ["Казахстан"],
-        ]
-    )
+    # markup = ReplyKeyboardMarkup(
+    #     [
+    #         ["Россия"],
+    #         ["Беларусь"],
+    #         ["Казахстан"],
+    #     ]
+    # )
     await update.message.reply_text(
-        "Укажите с каким ГЕО Вы работаете: ",
-        reply_markup=markup,
+        "вертикаль с которой работаешь:",
+        # reply_markup=markup,
     )
     return SOURCE
 
@@ -97,20 +97,26 @@ async def source(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ) -> int:
-    context.user_data["geo"] = update.message.text
+    context.user_data["vertical"] = update.message.text
+
+    markup = ReplyKeyboardMarkup(
+        [
+            ["Хочу"],
+            ["Не хочу"],
+        ]
+    )
 
     await update.message.reply_text(
-        "Укажите Ваш источник трафика: ",
-        reply_markup=ReplyKeyboardRemove(),
+        "хочу учавствовать в розыгрыше:",
+        reply_markup=markup,
     )
-    return VOLUME
+    return CHECK_SUB
 
 
 async def volume(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ) -> int:
-    context.user_data["source"] = update.message.text
 
     await update.message.reply_text(
         "Укажите Ваш объем трафика в месяц: ",
@@ -124,8 +130,8 @@ async def check_sub(
     context: ContextTypes.DEFAULT_TYPE,
 ) -> int:
     yes_markup = ReplyKeyboardMarkup([["Я подписался(-ась)!"]])
-    if not "volume" in context.user_data:
-        context.user_data["volume"] = update.message.text
+    if not "will" in context.user_data:
+        context.user_data["will"] = update.message.text
 
     await update.message.reply_text(
         "Проверяем Вашу подписку на канал...",
@@ -133,10 +139,10 @@ async def check_sub(
     )
     success_markup = ReplyKeyboardMarkup(
         [
-            ["Значок"],
-            ["Наклейки"],
-            ["Граффити баллончик"],
-            # ["Шоппер"],
+            ["Стикерпак"],
+            ["Шнурочек для телефона"],
+            ["Брелок"],
+            ["Шоппер"],
         ]
     )
 
@@ -173,7 +179,7 @@ async def finish(
     print(context.user_data)
 
     await update.message.reply_text(
-        "Выбор сделан!) Забери свой мерч на стенде B2!\nСпасибо за участие!",
+        "Выбор сделан!) Забери свой мерч на стенде K1!\nСпасибо за участие!",
         reply_markup=ReplyKeyboardRemove(),
     )
 
