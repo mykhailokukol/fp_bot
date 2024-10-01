@@ -87,7 +87,7 @@ async def geo(
     #     ]
     # )
     await update.message.reply_text(
-        "вертикаль с которой работаешь:",
+        "Вертикаль, с которой работаешь:",
         # reply_markup=markup,
     )
     return SOURCE
@@ -107,7 +107,7 @@ async def source(
     )
 
     await update.message.reply_text(
-        "хочу учавствовать в розыгрыше:",
+        "Хочу учавствовать в розыгрыше:",
         reply_markup=markup,
     )
     return CHECK_SUB
