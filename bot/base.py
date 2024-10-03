@@ -31,7 +31,7 @@ async def start(
         ]
     )
     await update.message.reply_text(
-        "Привет!\nЧтобы получить стильный мерч от Fonbet Partners, нужно выполнить два действия:\n1. Заполнить анкету\n2. Подписаться на канал",
+        "Привет!\nЧтобы поучаствовать в розыгрыше от Fonbet Partners нужно выполнить 2 условия:\n1. Заполнить анкету\n2. Подписаться на канал",
         reply_markup=markup,
     )
 
@@ -51,7 +51,7 @@ async def callback(
             if winners.find_one({"user_id": update.effective_user.id}):
                 print("found in db")
                 await update.effective_chat.send_message(
-                    "Вы уже получали мерч, его можно получить лишь единожды."
+                    "Вы уже участвуете в розыгрыше."
                 )
                 return
             await update.effective_chat.send_message(
@@ -107,7 +107,7 @@ async def source(
     )
 
     await update.message.reply_text(
-        "Хочу учавствовать в розыгрыше:",
+        "Хочу участвовать в розыгрыше:",
         reply_markup=markup,
     )
     return CHECK_SUB
@@ -152,13 +152,13 @@ async def check_sub(
     )
     if chat_member.status in ["member", "administrator", "creator"]:
         await update.message.reply_text(
-            "Готово, мерч ваш!",
+            "Готово, вы участник розыгрыша!",
             reply_markup=ReplyKeyboardRemove(),
         )
         return FINISH
     else:
         await update.message.reply_text(
-            "Вам осталось совсем немного для получения мерча от Fonbet Partners!\nПодпишитесь на канал https://t.me/Fonbet_Partners",
+            "Для участия в розыгрыше Вам осталось совсем немного\nПодпишитесь на канал https://t.me/Fonbet_Partners",
             reply_markup=yes_markup,
         )
         return CHECK_SUB
@@ -179,7 +179,7 @@ async def finish(
     print(context.user_data)
 
     await update.message.reply_text(
-        "Забери свой мерч на стенде K1!\nСпасибо за участие!",
+        "Готово ✅\nЖди результатов на стенде K1, спасибо за участие!",
         reply_markup=ReplyKeyboardRemove(),
     )
 
