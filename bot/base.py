@@ -153,7 +153,11 @@ async def check_sub(
     if chat_member.status in ["member", "administrator", "creator"]:
         await update.message.reply_text(
             "Готово, вы участник розыгрыша!",
-            reply_markup=ReplyKeyboardRemove(),
+            reply_markup=ReplyKeyboardMarkup(
+                [
+                    ["OK"],
+                ]
+            ),
         )
         return FINISH
     else:
