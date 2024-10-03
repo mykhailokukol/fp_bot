@@ -152,8 +152,8 @@ async def check_sub(
     )
     if chat_member.status in ["member", "administrator", "creator"]:
         await update.message.reply_text(
-            "Готово, мерч ваш!\nВыберите свой крутой мерч для получения: ",
-            reply_markup=success_markup,
+            "Готово, мерч ваш!",
+            reply_markup=ReplyKeyboardRemove(),
         )
         return FINISH
     else:
@@ -169,7 +169,7 @@ async def finish(
     context: ContextTypes.DEFAULT_TYPE,
 ) -> int:
     context.user_data["user_id"] = update.message.from_user.id
-    context.user_data["prize"] = update.message.text
+    # context.user_data["prize"] = update.message.text
     context.user_data["datetime"] = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
     client = MongoClient(settings.MONGODB_CLIENT_URL)
@@ -179,7 +179,7 @@ async def finish(
     print(context.user_data)
 
     await update.message.reply_text(
-        "Выбор сделан!) Забери свой мерч на стенде K1!\nСпасибо за участие!",
+        "Забери свой мерч на стенде K1!\nСпасибо за участие!",
         reply_markup=ReplyKeyboardRemove(),
     )
 
