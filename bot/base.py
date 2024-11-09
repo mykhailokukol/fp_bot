@@ -8,57 +8,195 @@ from telegram import (
     ReplyKeyboardRemove,
     Update,
 )
-from telegram.ext import ContextTypes, ConversationHandler, CallbackContext
+from telegram.ext import ContextTypes, ConversationHandler
 
 from bot.config import settings
+from bot.translations import (
+    action_tr,
+    username_tr,
+    geo_tr,
+    source_tr,
+    check_sub_tr,
+    cancel_tr,
+)
 
-GEO, SOURCE, VOLUME, CHECK_SUB, FINISH = range(5)
+ACTION, USERNAME, GEO, SOURCE, CHECK_SUB = range(5)
+
+
+client = MongoClient(settings.MONGODB_CLIENT_URL)
+db = client["fonbet"]
+WINNERS_TABLE = db["winners"]
 
 
 async def start(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
-) -> None:
-    print("start")
-    markup = InlineKeyboardMarkup(
+):
+    """start"""
+    print(f"DEBUG: Start triggered from: {update.message.from_user.id}")
+
+    # Look for user on DB
+    if WINNERS_TABLE.find_one({"user_id": update.message.from_user.id}):
+        await update.message.reply_text(
+            "Вы уже участвуете в розыграше.\nYou are already took a part in the giveaway."
+        )
+        return
+
+    markup = ReplyKeyboardMarkup(
         [
-            [InlineKeyboardButton("Заполнить анкету", callback_data="form")],
-            [
-                InlineKeyboardButton(
-                    "Подписаться на канал", url="https://t.me/Fonbet_Partners"
-                )
-            ],
+            ["Русский"],
+            ["English"],
         ]
     )
     await update.message.reply_text(
-        "Привет!\nЧтобы поучаствовать в розыгрыше от Fonbet Partners нужно выполнить 2 условия:\n1. Заполнить анкету\n2. Подписаться на канал",
+        "Выберите язык:\nChoose your language:",
         reply_markup=markup,
     )
 
+    return ACTION
 
-async def callback(
+
+async def action(
     update: Update,
-    context: CallbackContext,
-) -> int:
-    query = update.callback_query
-    answer = await query.answer()
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """action"""
+    print(f"DEBUG: Action triggered from: {update.message.from_user.id}")
 
-    match query.data:
-        case "form":
-            client = MongoClient(settings.MONGODB_CLIENT_URL)
-            db = client["fonbet"]
-            winners = db["winners"]
-            if winners.find_one({"user_id": update.effective_user.id}):
-                print("found in db")
-                await update.effective_chat.send_message(
-                    "Вы уже участвуете в розыгрыше."
-                )
-                return
-            await update.effective_chat.send_message(
-                "Укажите Ваш логин в Telegram",
-                reply_markup=ReplyKeyboardRemove(),
-            )
-            return GEO
+    text = update.message.text
+    if text not in ["Русский", "English"]:
+        await update.message.reply_text(
+            "Ошибка. Выберите язык, нажав на кнопку.\nError. Please choose your language pressing button below.",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return await start(update, context)
+    else:
+        if text == "English":
+            text = text.lower()
+        else:
+            text = "russian"
+    context.user_data["language"] = text
+
+    markup2 = ReplyKeyboardMarkup(
+        [
+            [action_tr[context.user_data["language"]]["fill_form"]],
+        ]
+    )
+    await update.message.reply_text(
+        action_tr[context.user_data["language"]]["action"],
+        reply_markup=markup2,
+    )
+    markup1 = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text=action_tr[context.user_data["language"]]["subscribe"],
+                    url="https://t.me/Partners_Batery",
+                ),
+            ],
+        ],
+    )
+    await update.message.reply_text(
+        action_tr[context.user_data["language"]]["subscribe_text"],
+        reply_markup=markup1,
+    )
+
+    return USERNAME
+
+
+async def username(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """username"""
+    print(f"DEBUG: Username triggered from: {update.message.from_user.id}")
+
+    await update.message.reply_text(
+        username_tr[context.user_data["language"]],
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    return GEO
+
+
+async def geo(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """geo"""
+    print(f"DEBUG: Geo triggered from: {update.message.from_user.id}")
+
+    context.user_data["username"] = update.message.text
+
+    await update.message.reply_text(
+        geo_tr[context.user_data["language"]],
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    return SOURCE
+
+
+async def source(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """source"""
+    print(f"DEBUG: Source triggered from: {update.message.from_user.id}")
+
+    context.user_data["geo"] = update.message.text
+
+    await update.message.reply_text(
+        source_tr[context.user_data["language"]],
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    return CHECK_SUB
+
+
+async def check_sub(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """check_sub"""
+    print(f"DEBUG: Check Sub triggered from: {update.message.from_user.id}")
+
+    if not "source" in context.user_data:
+        # Don't save "source" if user here when unsubscribed
+        context.user_data["source"] = update.message.text
+
+    await update.message.reply_text(
+        check_sub_tr[context.user_data["language"]]["check"],
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    chat_member = await context.bot.get_chat_member(
+        chat_id=settings.CHANNEL_NAME,
+        user_id=update.effective_user.id,
+    )
+
+    if chat_member.status in ["member", "administrator", "creator"]:
+        await update.message.reply_text(
+            check_sub_tr[context.user_data["language"]]["success"],
+            reply_markup=ReplyKeyboardRemove(),
+        )
+    else:
+        await update.message.reply_text(
+            check_sub_tr[context.user_data["language"]]["failure"],
+            reply_markup=ReplyKeyboardMarkup(
+                [
+                    ["OK"],
+                ]
+            ),
+        )
+        return CHECK_SUB
+
+    context.user_data["user_id"] = update.message.from_user.id
+    context.user_data["date_time"] = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+    # Save to the DB
+    WINNERS_TABLE.insert_one(context.user_data)
+    print(context.user_data)
+    return ConversationHandler.END
 
 
 async def cancel(
@@ -66,125 +204,13 @@ async def cancel(
     context: ContextTypes.DEFAULT_TYPE,
 ) -> int:
     """No description needed"""
+    try:
+        text = cancel_tr[context.user_data["language"]]
+    except KeyError:
+        text = "Cancel."
+
     await update.message.reply_text(
-        "Прекращаем последнюю операцию.",
+        text,
         reply_markup=ReplyKeyboardRemove(),
     )
-    return ConversationHandler.END
-
-
-async def geo(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> int:
-    context.user_data["username"] = update.message.text
-
-    # markup = ReplyKeyboardMarkup(
-    #     [
-    #         ["Россия"],
-    #         ["Беларусь"],
-    #         ["Казахстан"],
-    #     ]
-    # )
-    await update.message.reply_text(
-        "Вертикаль, с которой работаешь:",
-        # reply_markup=markup,
-    )
-    return SOURCE
-
-
-async def source(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> int:
-    context.user_data["vertical"] = update.message.text
-
-    markup = ReplyKeyboardMarkup(
-        [
-            ["Хочу"],
-            ["Не хочу"],
-        ]
-    )
-
-    await update.message.reply_text(
-        "Хочу участвовать в розыгрыше:",
-        reply_markup=markup,
-    )
-    return CHECK_SUB
-
-
-async def volume(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> int:
-
-    await update.message.reply_text(
-        "Укажите Ваш объем трафика в месяц: ",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-    return CHECK_SUB
-
-
-async def check_sub(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> int:
-    yes_markup = ReplyKeyboardMarkup([["Я подписался(-ась)!"]])
-    if not "will" in context.user_data:
-        context.user_data["will"] = update.message.text
-
-    await update.message.reply_text(
-        "Проверяем Вашу подписку на канал...",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-    success_markup = ReplyKeyboardMarkup(
-        [
-            ["Стикерпак"],
-            ["Шнурочек для телефона"],
-            ["Брелок"],
-            ["Шоппер"],
-        ]
-    )
-
-    chat_member = await context.bot.get_chat_member(
-        chat_id=settings.CHANNEL_NAME,
-        user_id=update.effective_user.id,
-    )
-    if chat_member.status in ["member", "administrator", "creator"]:
-        await update.message.reply_text(
-            "Готово, вы участник розыгрыша!",
-            reply_markup=ReplyKeyboardMarkup(
-                [
-                    ["OK"],
-                ]
-            ),
-        )
-        return FINISH
-    else:
-        await update.message.reply_text(
-            "Для участия в розыгрыше Вам осталось совсем немного\nПодпишитесь на канал https://t.me/Fonbet_Partners",
-            reply_markup=yes_markup,
-        )
-        return CHECK_SUB
-
-
-async def finish(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> int:
-    context.user_data["user_id"] = update.message.from_user.id
-    # context.user_data["prize"] = update.message.text
-    context.user_data["datetime"] = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-
-    client = MongoClient(settings.MONGODB_CLIENT_URL)
-    db = client["fonbet"]
-    winners = db["winners"]
-    winners.insert_one(context.user_data)
-    print(context.user_data)
-
-    await update.message.reply_text(
-        "Готово ✅\nЖди результатов на стенде K1, спасибо за участие!",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
     return ConversationHandler.END

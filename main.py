@@ -10,8 +10,19 @@ from telegram.ext import (
 )
 
 from bot.config import settings
-from bot.base import cancel, start, callback, geo, source, volume, check_sub, finish
-from bot.base import GEO, SOURCE, VOLUME, CHECK_SUB, FINISH
+from bot.base import (
+    cancel,
+    start,
+    # callback,
+    geo,
+    source,
+    # language,
+    check_sub,
+    # finish,
+    action,
+    username,
+)
+from bot.base import ACTION, USERNAME, GEO, SOURCE, CHECK_SUB
 
 logging.basicConfig(
     format="%(levelname)s | %(name)s | %(asctime)s | %(message)s", level=logging.INFO
@@ -23,15 +34,14 @@ def main() -> None:
     print("Starting...")
     app = ApplicationBuilder().token(settings.TG_TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
     conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(callback, pattern="form")],
+        entry_points=[CommandHandler("start", start)],
         states={
+            ACTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, action)],
+            USERNAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, username)],
             GEO: [MessageHandler(filters.TEXT & ~filters.COMMAND, geo)],
             SOURCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, source)],
-            # VOLUME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volume)],
             CHECK_SUB: [MessageHandler(filters.TEXT & ~filters.COMMAND, check_sub)],
-            FINISH: [MessageHandler(filters.TEXT & ~filters.COMMAND, finish)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True,
