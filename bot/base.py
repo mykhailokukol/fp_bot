@@ -38,7 +38,7 @@ async def start(
     # Look for user on DB
     if WINNERS_TABLE.find_one({"user_id": update.message.from_user.id}):
         await update.message.reply_text(
-            "Вы уже участвуете в розыграше.\nYou are already took a part in the giveaway."
+            "Вы уже участвуете в розыгрыше.\nYou are already took a part in the giveaway."
         )
         return
 
